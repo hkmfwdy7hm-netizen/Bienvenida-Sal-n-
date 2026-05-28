@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome Screen</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; font-family:Georgia,serif; background:#050505; }
+
+/* ═══════════════════════
+   SETUP PAGE
+═══════════════════════ */
+#page-setup {
+  width:100%; min-height:100vh;
+  background:#F5F0E8;
+  display:flex; flex-direction:column; align-items:center;
+  padding:36px 20px 80px;
+}
+
+.s-title {
+  font-size:22px; letter-spacing:5px;
+  color:#3A2800; text-transform:uppercase;
+  margin-bottom:6px; text-align:center;
+}
+.s-sub {
+  font-size:15px; color:#7A6030;
+  letter-spacing:2px; font-style:italic;
+  margin-bottom:28px; text-align:center;
+}
+
+/* LANGUAGE SELECTOR */
+.lang-wrap {
+  width:min(500px,94vw);
+  display:flex; gap:8px; margin-bottom:20px;
+}
+.lang-btn {
+  flex:1; padding:14px;
+  background:#fff; border:2px solid #D4B060;
+  color:#7A6030; font-size:15px; letter-spacing:3px;
+  text-transform:uppercase; cursor:pointer;
+  text-align:center; user-select:none;
+  transition:all .15s;
+}
+.lang-btn:hover { border-color:#8B6914; color:#3A2800; }
+.lang-btn.active { border-color:#8B6914; color:#3A2800; background:#FFF8E8; font-weight:bold; }
+
+/* ACCORDION MENU */
+.menu { width:min(500px,94vw); margin-bottom:20px; }
+
+.cat-hd {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 18px; margin-bottom:3px;
+  background:#fff; border:1px solid #D4B060;
+  color:#3A2800; font-size:14px; letter-spacing:3px;
+  text-transform:uppercase; cursor:pointer; user-select:none;
+  transition:all .15s;
+}
+.cat-hd:hover { background:#FFF8E8; }
+.cat-hd.open { background:#FFF3CC; border-color:#8B6914; color:#1A1000; font-weight:bold; }
+.cat-hd .arr { transition:transform .2s; font-size:11px; color:#8B6914; }
+.cat-hd.open .arr { transform:rotate(180deg); }
+
+.cat-body { display:none; margin-bottom:6px; }
+.cat-body.open { display:block; }
+
+.theme-opt {
+  display:flex; align-items:center; gap:14px;
+  padding:12px 28px;
+  background:#FAFAFA; border:1px solid #E0C878; border-top:none;
+  color:#5A4000; font-size:17px; cursor:pointer; user-select:none;
+  transition:all .12s;
+}
+.theme-opt:hover { background:#FFF8E8; color:#1A1000; }
+.theme-opt.active { color:#1A1000; background:#FFF3CC; border-color:#8B6914; font-weight:bold; }
+.tdot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+
+/* FIELDS */
+.sep { width:min(500px,94vw); height:1px; background:linear-gradient(to right,transparent,#D4B060,transparent); margin:16px 0; }
+
+.fields { width:min(500px,94vw); display:flex; flex-direction:column; gap:14px; }
+.field { display:flex; flex-direction:column; gap:5px; }
+.field label { font-size:11px; letter-spacing:3px; color:#7A6030; text-transform:uppercase; font-weight:bold; }
+.field input {
+  background:#fff; border:2px solid #D4B060;
+  color:#1A1000; font-family:Georgia,serif;
+  font-size:20px; padding:13px 16px;
+  outline:none; width:100%;
+  transition:border-color .15s;
+}
+.field input:focus { border-color:#8B6914; }
+.field input::placeholder { color:#C4A060; font-style:italic; }
+
+#btn-go {
+  margin-top:24px;
+  background:#3A2800; border:2px solid #3A2800;
+  color:#E8C96B; font-family:Georgia,serif;
+  font-size:13px; letter-spacing:5px; text-transform:uppercase;
+  padding:18px 56px; cursor:pointer;
+  transition:all .2s;
+}
+#btn-go:disabled { opacity:.3; cursor:default; background:#ccc; border-color:#ccc; color:#888; }
+#btn-go:not(:disabled):hover { background:#1A1000; }
+
+.tip { font-size:13px; color:#9A8050; letter-spacing:2px; font-style:italic; margin-top:12px; text-align:center; }
+
+/* ═══════════════════════
+   DISPLAY PAGE
+═══════════════════════ */
+#page-display {
+  display:none; position:fixed; inset:0; z-index:999;
+  flex-direction:column; align-items:center; justify-content:center;
+  background:#060608;
+}
+
+#cv { position:absolute; inset:0; z-index:0; }
+.vignette { position:absolute; inset:0; z-index:1; background:radial-gradient(ellipse at center,transparent 20%,rgba(0,0,0,0.55) 65%,rgba(0,0,0,0.88) 100%); pointer-events:none; }
+
+#orb1,#orb2 { position:absolute; border-radius:50%; filter:blur(90px); z-index:1; pointer-events:none; }
+#orb1 { width:500px; height:500px; top:-120px; left:-80px; }
+#orb2 { width:400px; height:400px; bottom:-80px; right:-60px; }
+
+/* corners */
+.corner { position:fixed; z-index:3; width:50px; height:50px; opacity:0; animation:fi 2s ease 3s forwards; }
+.corner svg { width:100%; height:100%; }
+.c-tl{top:24px;left:24px} .c-tr{top:24px;right:24px;transform:scaleX(-1)} .c-bl{bottom:24px;left:24px;transform:scaleY(-1)} .c-br{bottom:24px;right:24px;transform:scale(-1,-1)}
+
+/* content */
+.d-content { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; padding:0 40px; width:100%; }
+
+/* ornament */
+.orn { display:flex; align-items:center; gap:16px; }
+.ol { width:70px; height:1px; background:linear-gradient(to right,transparent,#C9A84C); }
+.or { width:70px; height:1px; background:linear-gradient(to left,transparent,#C9A84C); }
+.od { width:7px; height:7px; transform:rotate(45deg); background:#C9A84C; animation:diamond-glow 3s ease-in-out infinite; }
+.op { width:3px; height:3px; border-radius:50%; background:#7A6030; }
+
+/* text layers */
+.d-line1 {
+  font-size:clamp(18px,2.2vw,36px); letter-spacing:4px;
+  color:#C9A84C; text-transform:uppercase;
+  margin:22px 0 0; text-align:center;
+  opacity:0; animation:fu 1.8s ease .6s forwards;
+  padding:0 20px;
+  line-height:1.3;
+}
+.d-names {
+  font-size:clamp(72px,11vw,160px);
+  font-weight:300; font-style:italic;
+  color:#FAF6EE; text-align:center;
+  line-height:1; margin:14px 0 0;
+  opacity:0; animation:fu 2s ease 1s forwards, breathe 5s ease-in-out 3s infinite;
+  text-shadow:0 0 80px rgba(201,168,76,0.3);
+  padding:0 20px;
+  word-break:break-word;
+}
+.d-amp { font-size:.65em; color:#E8C96B; margin:0 .12em; font-style:normal; }
+
+.d-divider {
+  display:flex; align-items:center; gap:18px;
+  margin:20px 0;
+  opacity:0; animation:fi 1.8s ease 1.6s forwards;
+}
+.d-dl { width:120px; height:1px; background:linear-gradient(to right,transparent,#C9A84C,transparent); opacity:.5; }
+.d-dc { display:flex; align-items:center; gap:10px; }
+.d-dd { width:6px; height:6px; transform:rotate(45deg); background:#C9A84C; animation:diamond-glow 3s ease-in-out infinite; }
+.d-ds { width:4px; height:4px; transform:rotate(45deg); background:#7A6030; }
+
+.d-line3 {
+  font-size:clamp(16px,2vw,32px); letter-spacing:4px;
+  color:#E8C96B; text-transform:uppercase;
+  text-align:center;
+  opacity:0; animation:fu 1.8s ease 1.9s forwards;
+  padding:0 20px;
+  line-height:1.3;
+}
+.d-date {
+  font-size:clamp(16px,1.8vw,28px); font-weight:300; letter-spacing:5px;
+  color:rgba(250,246,238,0.55); text-transform:uppercase;
+  margin-top:10px; text-align:center;
+  opacity:0; animation:fu 1.8s ease 2.1s forwards;
+}
+.d-school {
+  font-size:clamp(13px,1.3vw,20px); letter-spacing:3px;
+  text-transform:uppercase; margin-top:8px;
+  text-align:center; display:none;
+  opacity:0; animation:fu 1.8s ease 2.2s forwards;
+  padding:0 20px;
+}
+
+/* venue */
+#d-venue {
+  position:fixed; bottom:32px; right:40px;
+  z-index:5; display:none; align-items:center; gap:10px;
+  opacity:0; animation:fi 2s ease 3.2s forwards;
+}
+.d-vline { width:26px; height:1px; }
+.d-vtxt { font-size:clamp(7px,.7vw,11px); letter-spacing:4px; text-transform:uppercase; }
+
+/* gender reveal special colors */
+.gender-line1 { color:#E882B4 !important; }
+.gender-line3 { color:#82BEE8 !important; }
+.gender-ornament-pink .od { background:#E882B4 !important; box-shadow:0 0 8px #E882B4 !important; }
+
+/* animations */
+@keyframes fu { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fi { from{opacity:0} to{opacity:1} }
+@keyframes breathe { 0%,100%{text-shadow:0 0 40px rgba(201,168,76,0.15), 0 0 80px rgba(201,168,76,0.1)} 50%{text-shadow:0 0 80px rgba(201,168,76,0.55), 0 0 140px rgba(201,168,76,0.25), 0 0 200px rgba(201,168,76,0.1)} }
+@keyframes diamond-glow { 0%,100%{box-shadow:0 0 4px rgba(201,168,76,0.2), 0 0 8px rgba(201,168,76,0.1)} 50%{box-shadow:0 0 12px rgba(201,168,76,0.9), 0 0 24px rgba(201,168,76,0.5), 0 0 40px rgba(201,168,76,0.2)} }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════
+     PAGE 1 — SETUP
+═══════════════════════════════ -->
+<div id="page-setup">
+  <div class="s-title">Welcome Screen</div>
+  <div class="s-sub">Configure your event display</div>
+
+  <!-- LANGUAGE -->
+  <div class="lang-wrap">
+    <div class="lang-btn active" onclick="setLang('es',this)">🇲🇽 Español</div>
+    <div class="lang-btn" onclick="setLang('en',this)">🇺🇸 English</div>
+  </div>
+
+  <!-- MENU -->
+  <div class="menu" id="menu">
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-boda">Boda</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="boda" data-theme="boda-oro" onclick="pickTheme(this)"><span class="tdot" style="background:#C9A84C"></span>Black &amp; Gold</div>
+      <div class="theme-opt" data-ev="boda" data-theme="boda-rosa" onclick="pickTheme(this)"><span class="tdot" style="background:#E8A0B8"></span>Rosa &amp; Gold</div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-quince">Quinceañera</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="quince" data-theme="quince-rosa" onclick="pickTheme(this)"><span class="tdot" style="background:#E8829A"></span>Rosa</div>
+      <div class="theme-opt" data-ev="quince" data-theme="quince-morado" onclick="pickTheme(this)"><span class="tdot" style="background:#9B6FD4"></span>Morado</div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-baby">Baby Shower</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="baby" data-theme="baby-nino" onclick="pickTheme(this)"><span class="tdot" style="background:#5BA3D4"></span><span class="lbl-nino">Niño</span></div>
+      <div class="theme-opt" data-ev="baby" data-theme="baby-nina" onclick="pickTheme(this)"><span class="tdot" style="background:#E882B4"></span><span class="lbl-nina">Niña</span></div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-bday">Cumpleaños</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="bday" data-theme="bday-mujer" onclick="pickTheme(this)"><span class="tdot" style="background:#C4527A"></span><span class="lbl-mujer">Mujer</span></div>
+      <div class="theme-opt" data-ev="bday" data-theme="bday-hombre" onclick="pickTheme(this)"><span class="tdot" style="background:#8BB4D4"></span><span class="lbl-hombre">Hombre</span></div>
+      <div class="theme-opt" data-ev="bday" data-theme="bday-nina" onclick="pickTheme(this)"><span class="tdot" style="background:#D4609A"></span><span class="lbl-nina2">Niña</span></div>
+      <div class="theme-opt" data-ev="bday" data-theme="bday-nino" onclick="pickTheme(this)"><span class="tdot" style="background:#4A9FD4"></span><span class="lbl-nino2">Niño</span></div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-grad">Graduación</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="grad" data-theme="grad" onclick="pickTheme(this)"><span class="tdot" style="background:#C9A84C"></span><span class="lbl-grad2">Graduación</span></div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-bautizo">Bautizo</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="bautizo" data-theme="bautizo-nino" onclick="pickTheme(this)"><span class="tdot" style="background:#7AB8D8"></span><span class="lbl-nino3">Niño</span></div>
+      <div class="theme-opt" data-ev="bautizo" data-theme="bautizo-nina" onclick="pickTheme(this)"><span class="tdot" style="background:#E8A0C0"></span><span class="lbl-nina3">Niña</span></div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-aniv">Aniversario</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="aniv" data-theme="boda-oro" onclick="pickTheme(this)"><span class="tdot" style="background:#C9A84C"></span>Black &amp; Gold</div>
+      <div class="theme-opt" data-ev="aniv" data-theme="boda-rosa" onclick="pickTheme(this)"><span class="tdot" style="background:#E8A0B8"></span>Rosa &amp; Gold</div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-gender">Revelación de Género</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="gender" data-theme="gender-reveal" onclick="pickTheme(this)"><span class="tdot" style="background:linear-gradient(to right,#E882B4,#82BEE8)"></span>Rosa &amp; Azul</div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-compromiso">Fiesta de Compromiso</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="compromiso" data-theme="boda-oro" onclick="pickTheme(this)"><span class="tdot" style="background:#C9A84C"></span>Black &amp; Gold</div>
+      <div class="theme-opt" data-ev="compromiso" data-theme="boda-rosa" onclick="pickTheme(this)"><span class="tdot" style="background:#E8A0B8"></span>Rosa &amp; Gold</div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-familiar">Fiesta Familiar</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="familiar" data-theme="boda-oro" onclick="pickTheme(this)"><span class="tdot" style="background:#C9A84C"></span>Black &amp; Gold</div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-corp">Evento Corporativo</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="corp" data-theme="bday-hombre" onclick="pickTheme(this)"><span class="tdot" style="background:#8BB4D4"></span>Azul &amp; Elegante</div>
+      <div class="theme-opt" data-ev="corp" data-theme="boda-oro" onclick="pickTheme(this)"><span class="tdot" style="background:#C9A84C"></span>Black &amp; Gold</div>
+    </div>
+
+    <div class="cat-hd" onclick="togCat(this)"><span id="lbl-navidad">Fiesta Navideña</span><span class="arr">▾</span></div>
+    <div class="cat-body">
+      <div class="theme-opt" data-ev="navidad" data-theme="navidad" onclick="pickTheme(this)"><span class="tdot" style="background:#C8414B"></span>Rojo &amp; Gold</div>
+    </div>
+
+  </div><!-- /menu -->
+
+  <div class="sep"></div>
+
+  <div class="fields">
+    <div class="field">
+      <label id="lf-n1">Nombre 1 (o nombre completo)</label>
+      <input id="fn1" type="text" placeholder="Daniel" />
+    </div>
+    <div class="field">
+      <label id="lf-n2">Nombre 2 — vacío si es solo uno</label>
+      <input id="fn2" type="text" placeholder="Sophia" />
+    </div>
+    <div class="field">
+      <label id="lf-date">Fecha del evento</label>
+      <input id="fdate" type="text" placeholder="Junio 14, 2025" />
+    </div>
+    <div class="field" id="school-wrap" style="display:none">
+      <label id="lf-school">Escuela / Universidad</label>
+      <input id="fschool" type="text" placeholder="UNM · Class of 2025" />
+    </div>
+    <div class="field">
+      <label id="lf-venue">Selecciona el venue</label>
+      <div style="display:flex;gap:8px;margin-top:2px;">
+        <div id="venue-btn-1" onclick="selectVenue(this,'ABQ Sky Events')"
+          style="flex:1;padding:14px;background:#fff;border:2px solid #D4B060;color:#5A4000;font-family:Georgia,serif;font-size:15px;text-align:center;cursor:pointer;transition:all .15s;user-select:none;">
+          ABQ Sky Events
+        </div>
+        <div id="venue-btn-2" onclick="selectVenue(this,'ABQ Eventos Paraíso')"
+          style="flex:1;padding:14px;background:#fff;border:2px solid #D4B060;color:#5A4000;font-family:Georgia,serif;font-size:15px;text-align:center;cursor:pointer;transition:all .15s;user-select:none;">
+          ABQ Eventos Paraíso
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <button id="btn-go" onclick="launch()" disabled>Display Screen</button>
+  <div class="tip" id="tip-txt">Selecciona una plantilla para continuar</div>
+</div>
+
+<!-- ═══════════════════════════════
+     PAGE 2 — DISPLAY
+═══════════════════════════════ -->
+<div id="page-display">
+  <canvas id="cv"></canvas>
+  <div class="vignette"></div>
+  <div id="orb1"></div>
+  <div id="orb2"></div>
+
+  <div class="corner c-tl"><svg viewBox="0 0 50 50" fill="none"><path d="M2 48L2 2L48 2" stroke="#C9A84C" stroke-width="1" opacity=".5"/><path d="M2 12L2 2L12 2" stroke="#C9A84C" stroke-width="1.5"/></svg></div>
+  <div class="corner c-tr"><svg viewBox="0 0 50 50" fill="none"><path d="M2 48L2 2L48 2" stroke="#C9A84C" stroke-width="1" opacity=".5"/><path d="M2 12L2 2L12 2" stroke="#C9A84C" stroke-width="1.5"/></svg></div>
+  <div class="corner c-bl"><svg viewBox="0 0 50 50" fill="none"><path d="M2 48L2 2L48 2" stroke="#C9A84C" stroke-width="1" opacity=".5"/><path d="M2 12L2 2L12 2" stroke="#C9A84C" stroke-width="1.5"/></svg></div>
+  <div class="corner c-br"><svg viewBox="0 0 50 50" fill="none"><path d="M2 48L2 2L48 2" stroke="#C9A84C" stroke-width="1" opacity=".5"/><path d="M2 12L2 2L12 2" stroke="#C9A84C" stroke-width="1.5"/></svg></div>
+
+  <div class="d-content">
+    <div class="orn" style="opacity:0;animation:fu 2s ease .3s forwards">
+      <div class="op"></div><div class="ol"></div><div class="od"></div><div class="or"></div><div class="op"></div>
+    </div>
+    <div class="d-line1" id="d-line1"></div>
+    <div class="d-names" id="d-names">
+      <span id="d-n1"></span><span class="d-amp" id="d-amp"> &amp; </span><span id="d-n2"></span>
+    </div>
+    <div class="d-divider">
+      <div class="d-dl"></div>
+      <div class="d-dc"><div class="d-ds"></div><div class="d-dd"></div><div class="d-ds"></div></div>
+      <div class="d-dl"></div>
+    </div>
+    <div class="d-line3" id="d-line3"></div>
+    <div class="d-date" id="d-date"></div>
+    <div class="d-school" id="d-school"></div>
+    <div class="orn" style="margin-top:24px;opacity:0;animation:fu 2s ease 2.3s forwards">
+      <div class="op"></div><div class="ol"></div><div class="od"></div><div class="or"></div><div class="op"></div>
+    </div>
+  </div>
+
+  <div id="d-venue">
+    <div class="d-vline"></div>
+    <div class="d-vtxt" id="d-venue-txt"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+// COPY
+// ══════════════════════════════════
+const COPY = {
+  es: {
+    menuLabels: { boda:'Boda', quince:'Quinceañera', baby:'Baby Shower', bday:'Cumpleaños', grad:'Graduación', bautizo:'Bautizo', aniv:'Aniversario', gender:'Revelación de Género', compromiso:'Fiesta de Compromiso', familiar:'Fiesta Familiar', corp:'Evento Corporativo', navidad:'Fiesta Navideña' },
+    subOpts: { nino:'Niño', nina:'Niña', mujer:'Mujer', hombre:'Hombre', grad2:'Graduación' },
+    fields: { n1:'Nombre 1 (o nombre completo)', n2:'Nombre 2 — vacío si es solo uno', date:'Fecha del evento', school:'Escuela / Universidad', venue:'Nombre del venue (opcional)' },
+    tip: 'Selecciona una plantilla para continuar',
+    events: {
+      boda:       { line1:'Bienvenidos a la Boda de',             line3:'Felicidades a los Nuevos Esposos' },
+      quince:     { line1:'Bienvenidos a los XV Años de',         line3:'Gracias por Acompañarme en este Día tan Especial' },
+      baby:       { line1:'Bienvenidos al Baby Shower de',        line3:'Un Nuevo Integrante Llega a la Familia' },
+      bday:       { line1:'Bienvenidos al Cumpleaños de',         line3:'Feliz Cumpleaños' },
+      grad:       { line1:'Bienvenidos a la Graduación de',       line3:'Un Logro que Merece Celebrarse' },
+      bautizo:    { line1:'Bienvenidos al Bautizo de',            line3:'Un Día Especial para Nuestra Familia' },
+      aniv:       { line1:'Bienvenidos al Aniversario de',        line3:'Celebrando Años de Amor y Recuerdos' },
+      gender:     { line1:'Bienvenidos a la Revelación de Género de', line3:'Hoy Descubrimos una Gran Sorpresa' },
+      compromiso: { line1:'Bienvenidos a la Fiesta de Compromiso de', line3:'Gracias por ser Parte de Nuestra Historia' },
+      familiar:   { line1:'Bienvenidos a la Fiesta de',           line3:'Lo Mejor de la Vida es Compartirla Juntos' },
+      corp:       { line1:'Bienvenidos al Evento de',             line3:'Gracias por Acompañarnos' },
+      navidad:    { line1:'Bienvenidos a la Fiesta Navideña de',  line3:'Que la Alegría de estas Fechas los Acompañe' },
+    }
+  },
+  en: {
+    menuLabels: { boda:'Wedding', quince:'Quinceañera', baby:'Baby Shower', bday:'Birthday', grad:'Graduation', bautizo:'Baptism', aniv:'Anniversary', gender:'Gender Reveal', compromiso:'Engagement Party', familiar:'Family Party', corp:'Corporate Event', navidad:'Christmas Party' },
+    subOpts: { nino:'Boy', nina:'Girl', mujer:'Woman', hombre:'Man', grad2:'Graduation' },
+    fields: { n1:'Name 1 (or full name)', n2:'Name 2 — leave blank if only one', date:'Event date', school:'School / University', venue:'Venue name (optional)' },
+    tip: 'Select a template to continue',
+    events: {
+      boda:       { line1:'Welcome to the Wedding of',            line3:'Congratulations to the Happy Couple' },
+      quince:     { line1:'Welcome to the Quinceañera of',        line3:'Thank You for Being Here Tonight' },
+      baby:       { line1:'Welcome to the Baby Shower of',        line3:'A New Baby is on the Way' },
+      bday:       { line1:'Welcome to the Birthday of',           line3:'Happy Birthday' },
+      grad:       { line1:'Welcome to the Graduation of',         line3:'So Proud of You' },
+      bautizo:    { line1:'Welcome to the Baptism of',            line3:'A Special Day for Our Family' },
+      aniv:       { line1:'Welcome to the Anniversary of',        line3:'Celebrating Years of Love Together' },
+      gender:     { line1:'Welcome to the Gender Reveal of',      line3:'Today We Find Out the Big News' },
+      compromiso: { line1:'Welcome to the Engagement Party of',   line3:'So Happy for You Both' },
+      familiar:   { line1:'Welcome to the Party of',              line3:'The More the Merrier' },
+      corp:       { line1:'Welcome to the Event of',              line3:'Thank You for Joining Us Today' },
+      navidad:    { line1:'Welcome to the Christmas Party of',    line3:'Wishing You Joy This Holiday Season' },
+    }
+  }
+};
+
+// ══════════════════════════════════
+// THEMES
+// ══════════════════════════════════
+const THEMES = {
+  'boda-oro':      { bg:'#060608', a1:'#C9A84C', a2:'#E8C96B', ad:'#7A6030', tx:'#FAF6EE', glow:'rgba(201,168,76,0.3)',  o1:'rgba(201,168,76,0.13)', o2:'rgba(201,168,76,0.07)', p:['rgba(201,168,76,','rgba(232,201,107,','rgba(245,230,184,'] },
+  'boda-rosa':     { bg:'#0A0308', a1:'#E8A0B8', a2:'#C9A84C', ad:'#8A4060', tx:'#FFF5F8', glow:'rgba(232,140,170,0.3)', o1:'rgba(232,140,170,0.13)',o2:'rgba(201,168,76,0.07)',  p:['rgba(220,160,180,','rgba(201,168,76,','rgba(244,190,210,'] },
+  'quince-rosa':   { bg:'#0D0208', a1:'#E8829A', a2:'#F4A7BB', ad:'#8B3D52', tx:'#FFF0F5', glow:'rgba(232,130,154,0.3)', o1:'rgba(232,130,154,0.14)',o2:'rgba(200,100,130,0.08)', p:['rgba(232,130,154,','rgba(255,180,200,','rgba(244,167,187,'] },
+  'quince-morado': { bg:'#08040F', a1:'#9B6FD4', a2:'#B990E8', ad:'#5A3A8A', tx:'#F5F0FF', glow:'rgba(155,111,212,0.3)', o1:'rgba(155,111,212,0.14)',o2:'rgba(130,90,200,0.08)',  p:['rgba(155,111,212,','rgba(200,160,240,','rgba(185,144,232,'] },
+  'baby-nino':     { bg:'#030810', a1:'#5BA3D4', a2:'#82BEE8', ad:'#2A5A80', tx:'#F0F8FF', glow:'rgba(91,163,212,0.3)',  o1:'rgba(91,163,212,0.14)', o2:'rgba(60,130,190,0.08)',  p:['rgba(91,163,212,','rgba(150,210,240,','rgba(130,190,232,'] },
+  'baby-nina':     { bg:'#100308', a1:'#E882B4', a2:'#F4A8CE', ad:'#8A3060', tx:'#FFF0F8', glow:'rgba(232,130,180,0.3)', o1:'rgba(232,130,180,0.14)',o2:'rgba(200,100,160,0.08)', p:['rgba(232,130,180,','rgba(255,180,220,','rgba(244,168,206,'] },
+  'bday-mujer':    { bg:'#0A0308', a1:'#C4527A', a2:'#E07A9A', ad:'#7A2040', tx:'#FFF0F5', glow:'rgba(196,82,122,0.3)',  o1:'rgba(196,82,122,0.14)', o2:'rgba(180,60,100,0.08)',  p:['rgba(196,82,122,','rgba(240,150,180,','rgba(224,122,154,'] },
+  'bday-hombre':   { bg:'#040408', a1:'#8BB4D4', a2:'#A8C8E4', ad:'#3A6080', tx:'#F0F4FF', glow:'rgba(139,180,212,0.25)',o1:'rgba(139,180,212,0.12)',o2:'rgba(100,150,190,0.07)', p:['rgba(139,180,212,','rgba(180,210,235,','rgba(168,200,228,'] },
+  'bday-nina':     { bg:'#0A0210', a1:'#D4609A', a2:'#E890B8', ad:'#803060', tx:'#FFF0FF', glow:'rgba(212,96,154,0.3)',  o1:'rgba(212,96,154,0.15)', o2:'rgba(190,70,130,0.09)',  p:['rgba(212,96,154,','rgba(255,160,210,','rgba(232,144,184,'] },
+  'bday-nino':     { bg:'#020810', a1:'#4A9FD4', a2:'#70B8E8', ad:'#1A5A80', tx:'#F0FAFF', glow:'rgba(74,159,212,0.3)',  o1:'rgba(74,159,212,0.15)', o2:'rgba(50,130,190,0.09)',  p:['rgba(74,159,212,','rgba(130,200,240,','rgba(112,184,232,'] },
+  'grad':          { bg:'#040508', a1:'#C9A84C', a2:'#E8C96B', ad:'#7A6030', tx:'#FAF6EE', glow:'rgba(201,168,76,0.3)',  o1:'rgba(201,168,76,0.13)', o2:'rgba(201,168,76,0.07)', p:['rgba(201,168,76,','rgba(232,201,107,','rgba(245,230,184,'] },
+  'bautizo-nino':  { bg:'#030810', a1:'#7AB8D8', a2:'#9CCCE8', ad:'#2A6080', tx:'#F5FAFF', glow:'rgba(122,184,216,0.25)',o1:'rgba(122,184,216,0.13)',o2:'rgba(90,160,200,0.08)',  p:['rgba(122,184,216,','rgba(180,220,240,','rgba(156,204,232,'] },
+  'bautizo-nina':  { bg:'#100208', a1:'#E8A0C0', a2:'#F4BCE0', ad:'#904060', tx:'#FFF5FA', glow:'rgba(232,160,192,0.25)',o1:'rgba(232,160,192,0.13)',o2:'rgba(200,120,160,0.08)', p:['rgba(232,160,192,','rgba(255,200,230,','rgba(244,188,224,'] },
+  'navidad':       { bg:'#060204', a1:'#C8414B', a2:'#E8C96B', ad:'#7A2028', tx:'#FFF5F0', glow:'rgba(200,65,75,0.3)',   o1:'rgba(200,65,75,0.14)',  o2:'rgba(201,168,76,0.08)',  p:['rgba(200,65,75,','rgba(201,168,76,','rgba(180,40,50,'] },
+  'gender-reveal':   { bg:'#080810', a1:'#E882B4', a2:'#82BEE8', ad:'#604060', tx:'#FFFFFF', glow:'rgba(232,130,180,0.25)', o1:'rgba(232,130,180,0.1)', o2:'rgba(91,163,212,0.1)',   p:['rgba(232,130,180,','rgba(91,163,212,','rgba(200,150,210,','rgba(130,180,232,'] },
+};
+
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+let lang = 'es';
+let curEv = null, curTheme = null;
+
+// ══════════════════════════════════
+// LANGUAGE
+// ══════════════════════════════════
+function setLang(l, btn) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyLangLabels();
+}
+
+function applyLangLabels() {
+  const c = COPY[lang];
+  const ml = c.menuLabels;
+  const so = c.subOpts;
+  const fl = c.fields;
+
+  document.getElementById('lbl-boda').textContent       = ml.boda;
+  document.getElementById('lbl-quince').textContent     = ml.quince;
+  document.getElementById('lbl-baby').textContent       = ml.baby;
+  document.getElementById('lbl-bday').textContent       = ml.bday;
+  document.getElementById('lbl-grad').textContent       = ml.grad;
+  document.getElementById('lbl-bautizo').textContent    = ml.bautizo;
+  document.getElementById('lbl-aniv').textContent       = ml.aniv;
+  document.getElementById('lbl-gender').textContent     = ml.gender;
+  document.getElementById('lbl-compromiso').textContent = ml.compromiso;
+  document.getElementById('lbl-familiar').textContent   = ml.familiar;
+  document.getElementById('lbl-corp').textContent       = ml.corp;
+  document.getElementById('lbl-navidad').textContent    = ml.navidad;
+
+  document.querySelectorAll('.lbl-nino,.lbl-nino2,.lbl-nino3,.lbl-nino4').forEach(e => e.textContent = so.nino);
+  document.querySelectorAll('.lbl-nina,.lbl-nina2,.lbl-nina3,.lbl-nina4').forEach(e => e.textContent = so.nina);
+  document.querySelectorAll('.lbl-mujer').forEach(e => e.textContent = so.mujer);
+  document.querySelectorAll('.lbl-hombre').forEach(e => e.textContent = so.hombre);
+  document.querySelectorAll('.lbl-grad2').forEach(e => e.textContent = so.grad2);
+
+  document.getElementById('lf-n1').textContent    = fl.n1;
+  document.getElementById('lf-n2').textContent    = fl.n2;
+  document.getElementById('lf-date').textContent  = fl.date;
+  document.getElementById('lf-school').textContent= fl.school;
+  document.getElementById('lf-venue').textContent = fl.venue;
+  document.getElementById('tip-txt').textContent  = c.tip;
+}
+
+// ══════════════════════════════════
+// ACCORDION
+// ══════════════════════════════════
+function togCat(el) {
+  const body = el.nextElementSibling;
+  const wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.cat-hd').forEach(h => h.classList.remove('open'));
+  document.querySelectorAll('.cat-body').forEach(b => b.classList.remove('open'));
+  if (!wasOpen) { el.classList.add('open'); body.classList.add('open'); }
+}
+
+function pickTheme(el) {
+  document.querySelectorAll('.theme-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  curEv    = el.dataset.ev;
+  curTheme = el.dataset.theme;
+  document.getElementById('school-wrap').style.display = curEv === 'grad' ? 'flex' : 'none';
+  document.getElementById('btn-go').disabled = false;
+  document.getElementById('btn-go').style.background = '#3A2800';
+  document.getElementById('btn-go').style.borderColor = '#3A2800';
+  document.getElementById('btn-go').style.color = '#E8C96B';
+  document.getElementById('btn-go').style.cursor = 'pointer';
+  document.getElementById('btn-go').style.opacity = '1';
+}
+
+// ══════════════════════════════════
+// VENUE SELECTOR
+// ══════════════════════════════════
+let selectedVenue = '';
+
+function selectVenue(el, name) {
+  document.getElementById('venue-btn-1').style.borderColor = '#D4B060';
+  document.getElementById('venue-btn-1').style.background = '#fff';
+  document.getElementById('venue-btn-1').style.fontWeight = 'normal';
+  document.getElementById('venue-btn-2').style.borderColor = '#D4B060';
+  document.getElementById('venue-btn-2').style.background = '#fff';
+  document.getElementById('venue-btn-2').style.fontWeight = 'normal';
+
+
+  el.style.borderColor = '#8B6914';
+  el.style.background = '#FFF3CC';
+  el.style.fontWeight = 'bold';
+  selectedVenue = name;
+}
+
+// ══════════════════════════════════
+// LAUNCH
+// ══════════════════════════════════
+function launch() {
+  if (!curTheme || !curEv) return;
+  const n1 = document.getElementById('fn1').value.trim();
+  if (!n1) { alert(lang==='es' ? 'Escribe al menos un nombre.' : 'Please enter at least one name.'); return; }
+
+  const t      = THEMES[curTheme];
+  const copy   = COPY[lang].events[curEv];
+  const n2     = document.getElementById('fn2').value.trim();
+  const date   = document.getElementById('fdate').value.trim();
+  const school = document.getElementById('fschool').value.trim();
+  const venue  = selectedVenue;
+  const dp     = document.getElementById('page-display');
+
+  // Apply background
+  dp.style.background = t.bg;
+
+  // Apply accent colors to SVG corners
+  dp.querySelectorAll('.corner svg path').forEach(p => p.setAttribute('stroke', t.a1));
+
+  // Orbs
+  document.getElementById('orb1').style.background = `radial-gradient(circle,${t.o1} 0%,transparent 70%)`;
+  document.getElementById('orb2').style.background = `radial-gradient(circle,${t.o2} 0%,transparent 70%)`;
+
+  // Ornament lines
+  dp.querySelectorAll('.ol').forEach(e => e.style.background = `linear-gradient(to right,transparent,${t.a1})`);
+  dp.querySelectorAll('.or').forEach(e => e.style.background = `linear-gradient(to left,transparent,${t.a1})`);
+  dp.querySelectorAll('.od').forEach(e => { e.style.background=t.a1; e.style.boxShadow=`0 0 8px ${t.a2}`; });
+  dp.querySelectorAll('.op').forEach(e => e.style.background = t.ad);
+  dp.querySelectorAll('.d-dl').forEach(e => e.style.background = `linear-gradient(to right,transparent,${t.a1},transparent)`);
+  dp.querySelectorAll('.d-dd').forEach(e => e.style.background = t.a1);
+  dp.querySelectorAll('.d-ds').forEach(e => e.style.background = t.ad);
+
+  // Text colors
+  document.getElementById('d-line1').style.color  = t.a1;
+  document.getElementById('d-names').style.color  = t.tx;
+  document.getElementById('d-names').style.textShadow = `0 0 80px ${t.glow}`;
+  // Update breathe animation to use theme glow color
+  const glowColor = t.glow;
+  const styleEl = document.getElementById('breathe-style') || document.createElement('style');
+  styleEl.id = 'breathe-style';
+  const gc = glowColor.replace('0.3','');
+  styleEl.textContent = `@keyframes breathe { 0%,100%{text-shadow:0 0 40px ${gc}0.15), 0 0 80px ${gc}0.08)} 50%{text-shadow:0 0 80px ${gc}0.6), 0 0 150px ${gc}0.28), 0 0 220px ${gc}0.1)} }`;
+  document.head.appendChild(styleEl);
+  document.querySelector('.d-amp').style.color     = t.a2;
+  document.getElementById('d-line3').style.color   = t.a2;
+  document.getElementById('d-date').style.color    = `rgba(${hexToRgb(t.tx)},0.5)`;
+  document.getElementById('d-school').style.color  = t.a1;
+
+  // Venue
+  const vc = document.getElementById('d-venue');
+  const vl = document.querySelector('.d-vline');
+  const vt = document.getElementById('d-venue-txt');
+  if (venue) {
+    vl.style.background = t.a1;
+    vt.style.color = t.a1;
+    vt.style.fontSize = 'clamp(10px,1vw,16px)';
+    vt.textContent = venue;
+    vc.style.display = 'flex';
+  } else {
+    vc.style.display = 'none';
+  }
+
+  // Fill text
+  document.getElementById('d-line1').textContent = copy.line1;
+  document.getElementById('d-n1').textContent    = n1;
+  const amp = document.getElementById('d-amp');
+  const dn2 = document.getElementById('d-n2');
+  if (n2) { amp.style.display=''; dn2.style.display=''; dn2.textContent=n2; }
+  else    { amp.style.display='none'; dn2.style.display='none'; }
+  document.getElementById('d-line3').textContent = copy.line3;
+  document.getElementById('d-date').textContent  = date;
+
+  const sc = document.getElementById('d-school');
+  if (school && curEv==='grad') { sc.textContent=school; sc.style.display='block'; } else sc.style.display='none';
+
+  // Switch pages
+  document.getElementById('page-setup').style.display = 'none';
+  dp.style.display = 'flex';
+
+  // Restart animations
+  dp.querySelectorAll('.d-line1,.d-names,.d-divider,.d-line3,.d-date,.d-school,.corner').forEach(el => {
+    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  });
+  dp.querySelectorAll('[style*="animation:fu"],[style*="animation:fi"]').forEach(el => {
+    const a = el.style.animation; el.style.animation='none'; void el.offsetWidth; el.style.animation=a;
+  });
+
+  // Particles
+  palette = t.p;
+  initP(); if(!rafId) draw();
+}
+
+// helper
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+// ── EDIT ──
+document.addEventListener('keydown', e => {
+  if (e.key==='e'||e.key==='E') {
+    document.getElementById('page-display').style.display = 'none';
+    document.getElementById('page-setup').style.display   = 'flex';
+    cancelAnimationFrame(rafId); rafId = null;
+  }
+});
+
+// ══════════════════════════════════
+// PARTICLES
+// ══════════════════════════════════
+const cv = document.getElementById('cv');
+const cx = cv.getContext('2d');
+let W, H, pts=[], palette=THEMES['boda-oro'].p, rafId=null;
+
+function rsz() { W=cv.width=innerWidth; H=cv.height=innerHeight; }
+rsz(); addEventListener('resize',()=>{ rsz(); initP(); });
+
+// Safe zones where particles avoid (center of screen where text lives)
+function inSafeZone(x, y) {
+  const cx = W/2, cy = H/2;
+  const zoneW = W*0.65, zoneH = H*0.55;
+  return Math.abs(x-cx) < zoneW/2 && Math.abs(y-cy) < zoneH/2;
+}
+
+function mkP(rnd) {
+  const c = palette[Math.floor(Math.random()*palette.length)];
+  const r = Math.random()*2.2+0.8;
+  let x, y;
+  // Place particles outside the text safe zone
+  let attempts = 0;
+  do {
+    x = Math.random()*W;
+    y = rnd ? Math.random()*H : H + r + 5;
+    attempts++;
+  } while(rnd && inSafeZone(x,y) && attempts < 20);
+
+  return {
+    x, y, r,
+    vy: -(Math.random()*.3+.06),
+    vx: (Math.random()-.5)*.12,
+    o:0, mo: Math.random()*0.6+0.2,
+    fs: Math.random()*.004+.002,
+    st:'in', ht:0, hd: Math.random()*350+200,
+    c, tw: Math.random()*Math.PI*2,
+    tws: Math.random()*.013+.004
+  };
+}
+
+function initP() {
+  pts=[];
+  const n = Math.floor(W*H/7000);
+  for(let i=0;i<n;i++) pts.push(mkP(true));
+}
+
+function draw() {
+  cx.clearRect(0,0,W,H);
+  pts.forEach((p,i)=>{
+    p.x+=p.vx; p.y+=p.vy; p.tw+=p.tws;
+    const tw=p.mo*(.7+.3*Math.sin(p.tw));
+    if(p.st==='in'){p.o=Math.min(p.o+p.fs,tw);if(p.o>=p.mo*.9)p.st='hold';}
+    else if(p.st==='hold'){p.o=tw;p.ht++;if(p.ht>p.hd)p.st='out';}
+    else{p.o=Math.max(p.o-p.fs,0);if(p.o<=0)pts[i]=mkP(false);}
+    if(p.y<-8)pts[i]=mkP(false);
+
+    // Skip drawing if particle drifted into text zone
+    if(inSafeZone(p.x,p.y)){p.y=H+5;return;}
+
+    // Clean dot only — no glow circle
+    cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    cx.fillStyle=p.c+p.o.toFixed(3)+')';cx.fill();
+  });
+  rafId=requestAnimationFrame(draw);
+}
+</script>
+</body>
+</html>
